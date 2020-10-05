@@ -4,13 +4,9 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
-use clap::{App, Arg};
 use futures::{future, prelude::*};
 use service::World;
-use std::{
-    io,
-    net::{IpAddr, SocketAddr},
-};
+use std::net::{IpAddr, SocketAddr};
 use tarpc::{
     context,
     server::{self, Channel, Handler},
@@ -30,35 +26,15 @@ impl World for HelloServer {
 }
 
 #[tokio::main]
-async fn main() -> io::Result<()> {
+async fn main() -> std::io::Result<()> {
     env_logger::init();
-
-    let flags = App::new("Hello Server")
-        .version("0.1")
-        .author("Tim <tikue@google.com>")
-        .about("Say hello!")
-        .arg(
-            Arg::with_name("port")
-                .short("p")
-                .long("port")
-                .value_name("NUMBER")
-                .help("Sets the port number to listen on")
-                .required(true)
-                .takes_value(true),
-        )
-        .get_matches();
-
-    let port = flags.value_of("port").unwrap();
-    let port = port
-        .parse()
-        .unwrap_or_else(|e| panic!(r#"--port value "{}" invalid: {}"#, port, e));
-
-    let server_addr = (IpAddr::from([0, 0, 0, 0]), port);
 
     // JSON transport is provided by the json_transport tarpc module. It makes it easy
     // to start up a serde-powered json serialization strategy over TCP.
-    let mut listener = tarpc::serde_transport::tcp::listen(&server_addr, Json::default).await?;
-    listener.config_mut().max_frame_length(4294967296);
+    let listener =
+        tarpc::serde_transport::tcp::listen((IpAddr::from([0, 0, 0, 0]), 3000), Json::default)
+            .await?;
+    // listener.config_mut().max_frame_length(4294967296);
     listener
         // Ignore accept errors.
         .filter_map(|r| future::ready(r.ok()))
